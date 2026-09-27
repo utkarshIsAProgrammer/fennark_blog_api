@@ -1,7 +1,13 @@
 import axios from 'axios';
 
+// Base URL comes from the VITE_API_URL env var (see .env.example).
+// - Dev: leave it empty so requests go through the Vite proxy in vite.config.js
+// - Prod: set it to your deployed backend origin, e.g. https://your-api.onrender.com
+//   (it is baked in at build time, so rebuild after changing it)
+const baseURL = `${(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')}/api/blogs`;
+
 const api = axios.create({
-  baseURL: '/api/blogs',
+  baseURL,
   headers: { 'Content-Type': 'application/json' },
 });
 

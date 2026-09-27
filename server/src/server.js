@@ -5,14 +5,22 @@ import { connectDB } from "./db/db.js";
 import { blogRoutes } from "./routes/blog.routes.js";
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT || 5500;
 
-// Allow only local development origins (Vite dev server + plain server access)
+// Extra frontend origins come from the CLIENT_ORIGINS env var (comma-separated,
+// see .env.example) so a deployed frontend can connect without code changes.
+const envOrigins = (process.env.CLIENT_ORIGINS || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+// Local development origins (Vite dev server + plain server access)
 const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "http://localhost:4173", // vite preview
   "http://127.0.0.1:4173",
+  ...envOrigins,
 ];
 
 app.use(
