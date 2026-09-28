@@ -15,6 +15,9 @@ const envOrigins = (process.env.CLIENT_ORIGINS || "")
   .filter(Boolean);
 
 // Local development origins (Vite dev server + plain server access)
+// Allow only known origins: local dev + whatever the deployer adds via
+// CLIENT_ORIGINS (comma-separated). Vercel/Netlify preview & production URLs
+// are auto-allowed so deploys never need a server change.
 const allowedOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
@@ -23,11 +26,21 @@ const allowedOrigins = [
   ...envOrigins,
 ];
 
+const vercelPattern = /^https:\/\/([\w-]+\.)?vercel\.app$/;
+const netlifyPattern = /^https:\/\/([\w-]+\.)?netlify\.app$/; // also netlify preview URLs
+const netlifyDeploys = /^https:\/\/[0-9a-f]+--[\w-]+\.netlify\.app$/;
+const allowedPatterns = [vercelPattern, netlifyPattern, netlifyDeploys];
+
 app.use(
   cors({
     origin: (origin, callback) => {
       // allow requests with no origin (curl, same-origin via vite proxy, health checks)
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      // auto-allow Vercel/Netlify-hosted frontends (incl. preview deploys)
+      if (allowedPatterns.some((pattern) => pattern.test(origin))) {
+        return callback(null, true);
+      }
       return callback(new Error("Not allowed by CORS"));
     },
   })
